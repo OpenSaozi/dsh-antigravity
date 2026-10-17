@@ -56,7 +56,7 @@ export function antiGravityHeaders(access: string): Record<string, string> {
   return {
     authorization: `Bearer ${access}`,
     'content-type': 'application/json',
-    'user-agent': 'antigravity/2.5.2 darwin/arm64',
+    'user-agent': 'antigravity/cli/1.4.0 (aidev_client; os_type=linux; arch=amd64; cl=1000494485; auth_method=consumer)',
   }
 }
 

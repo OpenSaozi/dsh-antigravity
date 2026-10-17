@@ -60,6 +60,22 @@ function parseAuth(value: string | undefined): AntiGravityAuth {
   return parsed as AntiGravityAuth
 }
 
+function defaultThinkingConfig(modelId: string): Record<string, unknown> | undefined {
+  if (
+    modelId.startsWith('gemini-4-argon-')
+    || modelId.startsWith('claude-opus-5-5-')
+    || modelId.startsWith('claude-sonnet-5-5-')
+  ) {
+    const level = modelId.endsWith('-low') ? 'LOW' : modelId.endsWith('-medium') ? 'MEDIUM' : 'HIGH'
+    return { includeThoughts: true, thinkingLevel: level }
+  }
+  if (modelId.startsWith('gemini-3.8-flash-')) {
+    const budget = modelId.endsWith('-low') ? 1000 : modelId.endsWith('-medium') ? 4000 : -1
+    return { includeThoughts: true, thinkingBudget: budget }
+  }
+  return undefined
+}
+
 function requestBody(model: Model<AntiGravityApi>, context: Context, options: StreamOptions, projectId: string): unknown {
   const googleModel = model as unknown as Model<'google-generative-ai'>
   const request: Record<string, unknown> = {
@@ -72,6 +88,10 @@ function requestBody(model: Model<AntiGravityApi>, context: Context, options: St
   const generationConfig: Record<string, unknown> = {}
   if (options.temperature !== undefined) generationConfig.temperature = options.temperature
   if (options.maxTokens !== undefined) generationConfig.maxOutputTokens = options.maxTokens
+  const defaultThinking = defaultThinkingConfig(model.id)
+  if (defaultThinking && generationConfig.thinkingConfig === undefined) {
+    generationConfig.thinkingConfig = defaultThinking
+  }
   if (Object.keys(generationConfig).length > 0) request.generationConfig = generationConfig
   if (context.tools !== undefined && context.tools.length > 0) {
     request.tools = convertTools(context.tools, model.id.startsWith('claude-'))
